@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MissedMate AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#f5f3ff;font-family:Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:25px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:bold;color:#c4b5fd}
+.badge{font-size:12px;color:#86efac;border:1px solid #315746;border-radius:20px;padding:8px}
+.hero{padding:45px 0 25px}
+small{color:#67e8f9;letter-spacing:2px;font-weight:bold}
+h1{font-size:clamp(36px,7vw,58px);margin:15px 0}
+h1 span{color:#a78bfa}
+p{color:#aab5d0;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.card,.panel{background:#151d32;border:1px solid #293450;border-radius:16px;padding:18px}
+.card strong{display:block;font-size:27px;margin:10px 0}
+.card p{font-size:12px;margin-bottom:0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+h2{font-size:18px}
+textarea{width:100%;height:190px;background:#0b1020;color:white;border:1px solid #35415e;border-radius:10px;padding:13px;resize:vertical;line-height:1.6}
+button{padding:11px 14px;border:0;border-radius:9px;cursor:pointer;font-weight:bold;margin:8px 5px 0 0}
+.primary{background:#8b5cf6;color:white}
+.secondary{background:#28334d;color:white}
+.output{white-space:pre-wrap;line-height:1.8;font-size:14px;overflow-wrap:anywhere}
+.task{padding:11px 0;border-bottom:1px solid #293450;display:flex;gap:9px;line-height:1.5}
+.task input{accent-color:#a78bfa}
+.done{text-decoration:line-through;color:#8994ad}
+footer{text-align:center;font-size:12px;margin-top:30px}
+@media(max-width:650px){main{padding:17px}.layout{grid-template-columns:1fr}.grid{gap:7px}.card{padding:12px}.card strong{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">✦ MissedMate AI</div>
+<div class="badge">● PRIVATE DEMO</div>
+</header>
+
+<section class="hero">
+<small>YOUR PERSONAL MESSAGE ASSISTANT</small>
+<h1>Missed something?<br><span>We've got you.</span></h1>
+<p>Turn long messages into quick summaries, find deadlines and create your personal action list.</p>
+</section>
+
+<section class="grid">
+<div class="card">📨 Messages<strong id="count">0</strong><p>Analyzed this session</p></div>
+<div class="card">✅ Tasks<strong id="total">0</strong><p>Tasks discovered</p></div>
+<div class="card">⏳ Pending<strong id="pending">0</strong><p>Tasks to complete</p></div>
+</section>
+
+<div class="layout">
+<section class="panel">
+<h2>✦ Message analyzer</h2>
+<p>Paste a college announcement, email or group message.</p>
+<textarea id="message" placeholder="Example: Project report is due on 15 October. Upload your PDF before 5 PM. Team meeting tomorrow at 10 AM."></textarea>
+<button class="primary" id="analyze">✦ Analyze message</button>
+<button class="secondary" id="sample">Try sample</button>
+<button class="secondary" id="clear">Clear</button>
+</section>
+
+<section class="panel">
+<h2>🪄 Quick summary</h2>
+<div class="output" id="summary">Your summary will appear here.</div>
+<h2 style="margin-top:24px">📅 Important dates</h2>
+<div class="output" id="dates">No dates extracted yet.</div>
+</section>
+</div>
+
+<section class="panel" style="margin-top:16px">
+<h2>✅ Your action list</h2>
+<div id="tasks"><p>Your extracted tasks will appear here.</p></div>
+<button class="secondary" id="clearTasks">Clear completed tasks</button>
+</section>
+
+<footer>MissedMate AI · Never miss what matters ✦</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let messages=0,tasks=[];
+
+function update(){
+$("count").textContent=messages;
+$("total").textContent=tasks.length;
+$("pending").textContent=tasks.filter(t=>!t.done).length;
+}
+
+function renderTasks(){
+const box=$("tasks");
+box.innerHTML="";
+if(!tasks.length){box.innerHTML="<p>No tasks yet. Analyze a message first.</p>";update();return}
+tasks.forEach((t,i)=>{
+const row=document.createElement("label");
+row.className="task";
+const check=document.createElement("input");
+check.type="checkbox";check.checked=t.done;
+check.addEventListener("change",()=>{
+tasks[i].done=check.checked;renderTasks();
+});
+const text=document.createElement("span");
+text.textContent=t.text;
+if(t.done)text.className="done";
+row.append(check,text);box.appendChild(row);
+});
+update();
+}
+
+function analyze(){
+const raw=$("message").value.trim();
+if(!raw){$("summary").textContent="Please paste a message first.";return}
+
+messages++;
+const sentences=raw.split(/(?<=[.!?])\s+|[\n]+/).filter(s=>s.trim());
+const keywords=/\b(due|deadline|submit|submission|upload|bring|prepare|complete|finish|attend|meeting|tomorrow|today|urgent|remember|send|register|assignment|report|exam|test|project|before|by)\b/i;
+const important=sentences.filter(s=>keywords.test(s));
+const summary=important.length?important.slice(0,4):sentences.slice(0,3);
+$("summary").textContent=summary.map(s=>"• "+s.trim()).join("\n\n");
+
+const datePattern=/\b(?:\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|\b(?:today|tomorrow|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b|\b\d{1,2}(?::\d{2})?\s?(?:AM|PM)\b)/gi;
+const found=[...new Set(raw.match(datePattern)||[])];
+$("dates").textContent=found.length?found.map(x=>"📌 "+x).join("\n"):"No clear dates or times detected.";
+
+const candidates=sentences.filter(s=>keywords.test(s));
+const extracted=candidates.length?candidates:[];
+extracted.forEach(s=>{
+if(!tasks.some(t=>t.text.toLowerCase()===s.trim().toLowerCase()))
+tasks.push({text:s.trim(),done:false});
+});
+renderTasks();update();
+}
+
+$("analyze").addEventListener("click",analyze);
+$("sample").addEventListener("click",()=>{
+$("message").value="Reminder for everyone! Our project report is due on 15 October. Upload your PDF before 5 PM. Team meeting tomorrow at 10 AM. Bring your laptop and finish your slides. Register for the workshop by Friday.";
+analyze();
+});
+$("clear").addEventListener("click",()=>{
+$("message").value="";
+$("summary").textContent="Your summary will appear here.";
+$("dates").textContent="No dates extracted yet.";
+});
+$("clearTasks").addEventListener("click",()=>{
+tasks=tasks.filter(t=>!t.done);renderTasks();
+});
+update();
+</script>
+</body>
+</html>
